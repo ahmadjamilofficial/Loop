@@ -93,7 +93,7 @@ python:
   optionalDependencies: {}
   outputModelSuffix: output
   packageManager: uv
-  packageName: loop
+  packageName: loopsdk
   preApplyUnionDiscriminators: true
   preserveUnknownFields: false
   pytestFilterWarnings: []

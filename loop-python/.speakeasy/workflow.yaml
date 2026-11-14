@@ -11,6 +11,9 @@ targets:
     loop:
         target: python
         source: loop-OAS
+        publish:
+            pypi:
+                token: $PYPI_TOKEN
         codeSamples:
             registry:
                 location: registry.speakeasyapi.dev/zehanxtech/loop/loop-oas-python-code-samples
