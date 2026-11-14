@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/ahmadjamilofficial/Loop">GitHub</a> ·
-  <a href="https://loop-systematic-architecture-api-index.vercel.app/docs">API Reference</a> ·
+  <a href="https://github.com/Ahmadjamilofficial/Loop/Openapi/openapi.json">API Reference</a> ·
   <a href="https://github.com/ahmadjamilofficial/Loop/tree/main/loop-python/docs">SDK Documentation</a>
 </p>
 
