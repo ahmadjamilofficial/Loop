@@ -5,13 +5,15 @@
 </p>
 
 <p align="center">
-  A developer-friendly, type-safe Python SDK for collecting human feedback on AI interactions and turning it into fine-tuning datasets.
+  An open-source RLHF toolkit for AI developers.
+  <br>
+  Capture model interactions, collect human feedback, and build better training data.
 </p>
 
 <p align="center">
   <a href="https://github.com/ahmadjamilofficial/Loop">GitHub</a> ·
-  <a href="https://loop-systematic-architecture-api-index.vercel.app/docs">API Documentation</a> ·
-  <a href="https://pypi.org/project/loop/">PyPI</a>
+  <a href="https://loop-systematic-architecture-api-index.vercel.app/docs">API Reference</a> ·
+  <a href="https://github.com/ahmadjamilofficial/Loop/tree/main/loop-python/docs">SDK Documentation</a>
 </p>
 
 <p align="center">
@@ -25,141 +27,235 @@
 
 ## What is Loop?
 
-**Loop is an open-source, local-first RLHF toolkit for AI developers.**
+**Loop is a developer-focused Reinforcement Learning from Human Feedback (RLHF) toolkit.**
 
-It gives developers a simple way to capture model interactions, collect human feedback, and transform that feedback into datasets for model training.
+It provides a Python SDK and a lightweight validation API for capturing AI interactions, collecting human feedback, and organizing feedback into structured datasets for model improvement.
 
-Instead of building your own feedback infrastructure, you can integrate Loop into your Python application and start collecting useful training signals.
+Every AI application produces valuable information:
 
-### The idea
+- Which responses do users appreciate?
+- Which answers are inaccurate or incomplete?
+- What would a better answer look like?
+- Which models consistently produce better results?
+- Which interactions should become training examples?
 
-Your AI application generates a response. A user evaluates it. Loop captures that feedback and helps turn it into structured training data.
+Loop is designed to help developers capture these signals without building an entire feedback infrastructure from scratch.
 
-```text
-AI Application
-      |
-      v
- Model Interaction
-      |
-      v
-  Loop SDK
-      |
-      +------> Local Interaction Storage
-      |         ~/.loop/interactions.jsonl
-      |
-      v
-  Human Feedback
-      |
-      +------> Local Feedback Storage
-      |         ~/.loop/feedback.jsonl
-      |
-      v
- Dataset Generation
-      |
-      +------> Chat JSONL
-      +------> Alpaca JSONL
-      +------> DPO JSONL
-```
+Instead of treating user feedback as disposable application data, Loop treats it as a potential source of model improvement.
 
-### Why Loop?
-
-- **Local-first:** Interaction and feedback records are stored on the developer's machine.
-- **Developer-friendly:** A straightforward Python SDK with typed interfaces.
-- **Privacy-conscious:** The hosted validation API is designed to be stateless and does not persist interaction or feedback records.
-- **Training-ready:** Organize feedback into formats used by modern fine-tuning workflows.
-- **Open source:** MIT-licensed and designed to be extended by the community.
-
-## How it works
-
-Loop has two main components:
-
-### 1. Python SDK
-
-The SDK integrates with your AI application. It handles interaction logging, feedback submission, local storage, and dataset workflows.
-
-Local records are stored under:
+### The feedback loop
 
 ```text
-~/.loop/
-├── interactions.jsonl
-└── feedback.jsonl
+              AI APPLICATION
+                    |
+                    v
+             MODEL RESPONSE
+                    |
+                    v
+              LOOP SDK
+                    |
+                    v
+          INTERACTION CAPTURE
+                    |
+                    v
+             HUMAN FEEDBACK
+               /        \
+              /          \
+         POSITIVE       NEGATIVE
+         FEEDBACK       FEEDBACK
+                           |
+                           v
+                      CORRECTION
+                           |
+                           v
+                  STRUCTURED DATA
+                           |
+                           v
+                 TRAINING DATASETS
+                    /    |    \
+                   /     |     \
+                CHAT  ALPACA   DPO
+                    \    |    /
+                     \   |   /
+                      MODEL
+                   IMPROVEMENT
 ```
 
-### 2. Loop API
+## Why Loop?
 
-The hosted API provides validation and acknowledgement services.
+Building an AI application is only one part of developing a useful AI system. Understanding how users interact with that system is equally important.
 
-**Production API:**
+Loop focuses on that feedback layer.
+
+| Capability | What it provides |
+|---|---|
+| Interaction logging | Capture prompts, model responses, and metadata |
+| Human feedback | Record positive and negative reactions |
+| Corrections | Capture improved answers for training workflows |
+| Batch operations | Validate up to 100 interactions in one request |
+| Typed Python SDK | Structured models and developer-friendly interfaces |
+| Export schemas | Discover supported fine-tuning dataset formats |
+| Stateless API | Validate requests without maintaining interaction databases |
+| Local-first architecture | Designed around keeping interaction data under developer control |
+
+### Design principles
+
+**1. Developer-first**
+
+A simple Python interface, typed request and response models, synchronous and asynchronous operations, and configurable HTTP clients.
+
+**2. Privacy-conscious**
+
+The hosted API is designed as a stateless validation service. It does not maintain a database of submitted interactions or feedback.
+
+**3. Training-oriented**
+
+Feedback is structured around the information that can help improve a model, rather than being limited to generic analytics.
+
+**4. Open source**
+
+Loop is designed to be inspectable, extensible, and community-driven.
+
+---
+
+## Architecture
+
+Loop separates its API layer from its data-handling design.
+
+### Python SDK
+
+The Python SDK provides the client interface for:
+
+- Logging individual interactions.
+- Logging batches of interactions.
+- Submitting human feedback.
+- Retrieving export format definitions.
+- Checking API health.
+- Submitting statistics summaries.
+
+The SDK is generated using Speakeasy from the project's OpenAPI specification.
+
+### Loop API
+
+The hosted API is built with FastAPI and Pydantic.
+
+Production endpoint:
 
 ```text
 https://loop-systematic-architecture-api-index.vercel.app
 ```
 
-The API validates incoming requests, generates or confirms interaction identifiers, and returns responses. According to the current architecture, it does not persist interaction or feedback records.
+Interactive documentation:
 
-### Request lifecycle
+https://loop-systematic-architecture-api-index.vercel.app/docs
 
-1. Your application sends an interaction through the SDK.
-2. The API validates the request and returns an identifier.
-3. The SDK writes the interaction to local storage.
-4. Your application collects user feedback.
-5. The API validates and acknowledges the feedback.
-6. The SDK writes the feedback locally.
-7. The local dataset workflow transforms eligible records into training examples.
+The API:
 
-**Your interaction and feedback data stays local rather than being stored in Loop's hosted API.**
+- Validates incoming payloads.
+- Generates or confirms interaction identifiers.
+- Acknowledges feedback submissions.
+- Provides export format schemas.
+- Validates and echoes statistics summaries.
+- Returns structured errors and request identifiers.
+
+It does not persist interaction or feedback records.
+
+### Intended local data model
+
+The local-first architecture defines the following storage layout:
+
+```text
+~/.loop/
+│
+├── interactions.jsonl
+│
+└── feedback.jsonl
+```
+
+| File | Intended contents |
+|---|---|
+| `interactions.jsonl` | Prompts, responses, models, timestamps, metadata, and session identifiers |
+| `feedback.jsonl` | Interaction references, ratings, corrections, comments, and feedback identifiers |
+
+**Implementation status:** The API and generated SDK contracts describe this local-storage architecture. The currently committed generated SDK methods should not yet be assumed to implement local JSONL persistence or the `loop` CLI. Those capabilities need to be verified or completed in the SDK integration layer.
 
 ---
 
 ## Installation
 
-Loop requires **Python 3.10 or later**.
+Loop supports Python 3.10 and later.
 
-The SDK can be installed using `uv`, `pip`, or Poetry.
+### Install directly from GitHub
 
-> **Current installation:** The commands below install directly from the GitHub repository's `loop-python` directory. Use these until the package is published and a stable PyPI installation is available.
+The Python SDK is located inside the `loop-python/` subdirectory.
 
-### Using uv
-
-```bash
-uv add git+https://github.com/ahmadjamilofficial/Loop.git#subdirectory=loop-python
-```
-
-### Using pip
+**pip**
 
 ```bash
 pip install git+https://github.com/ahmadjamilofficial/Loop.git#subdirectory=loop-python
 ```
 
-### Using Poetry
+**uv**
+
+```bash
+uv add git+https://github.com/ahmadjamilofficial/Loop.git#subdirectory=loop-python
+```
+
+**Poetry**
 
 ```bash
 poetry add git+https://github.com/ahmadjamilofficial/Loop.git#subdirectory=loop-python
 ```
 
-### Verify installation
+### Package information
 
-```python
-from loop import Loop
+| Property | Value |
+|---|---|
+| Distribution name | `loopsdk` |
+| Python import | `loop` |
+| Current SDK version in source | `0.0.2` |
+| Minimum Python version | `3.10` |
+| HTTP client | HTTPX |
+| Data models | Pydantic |
+| SDK generator | Speakeasy |
 
-client = Loop()
+The package metadata currently identifies the distribution as `loopsdk`. Once the package is published to PyPI, the corresponding installation command should be:
 
-response = client.health.health()
-print(response)
+```bash
+pip install loopsdk
 ```
 
 ---
 
 ## Quickstart
 
-Get started by logging an interaction and submitting feedback.
+### 1. Initialize Loop
+
+```python
+from loop import Loop
+
+client = Loop()
+```
+
+### 2. Check API connectivity
+
+```python
+from loop import Loop
+
+with Loop() as client:
+    response = client.health.health()
+    print(response)
+```
+
+The health endpoint returns the API status and version.
+
+### 3. Log an interaction
 
 ```python
 from loop import Loop
 
 with Loop() as client:
 
-    # 1. Log an AI interaction
     interaction = client.interactions.log_interaction(
         prompt="What is the capital of Pakistan?",
         response="Islamabad",
@@ -168,71 +264,133 @@ with Loop() as client:
             "application": "my-ai-app",
             "environment": "development",
         },
+        session_id="session_001",
     )
 
     interaction_id = interaction.result.id
 
     print("Interaction ID:", interaction_id)
-
-    # 2. Submit positive feedback
-    client.feedback.submit_feedback(
-        interaction_id=interaction_id,
-        rating="up",
-    )
-
-    # 3. Submit negative feedback with a correction
-    client.feedback.submit_feedback(
-        interaction_id=interaction_id,
-        rating="down",
-        correction="The capital of Pakistan is Islamabad.",
-        comment="The answer needs a more complete explanation.",
-    )
 ```
 
-The SDK handles the API requests and, according to the local-first design, writes the corresponding records to your local Loop storage.
+### 4. Submit feedback
+
+Positive feedback:
+
+```python
+client.feedback.submit_feedback(
+    interaction_id=interaction_id,
+    rating="up",
+)
+```
+
+Negative feedback with a correction:
+
+```python
+client.feedback.submit_feedback(
+    interaction_id=interaction_id,
+    rating="down",
+    correction="The capital of Pakistan is Islamabad.",
+    comment="The original response was incomplete.",
+)
+```
+
+The feedback schema supports two ratings:
+
+| Rating | Meaning |
+|---|---|
+| `up` | The response was good |
+| `down` | The response was bad |
+
+A correction is optional and represents an improved answer.
 
 ---
 
-## SDK usage
+## Core SDK resources
 
-### Log an interaction
+The generated Python SDK exposes five primary resources.
 
-Use `log_interaction()` whenever your AI application generates a response.
+| Resource | Operations | Purpose |
+|---|---|---|
+| Health | `health()` | API connectivity |
+| Interactions | `log_interaction()` | Log an individual interaction |
+| Interactions | `log_interactions_batch()` | Validate a batch of interactions |
+| Feedback | `submit_feedback()` | Submit human feedback |
+| Export | `export_formats()` | Retrieve supported export schemas |
+| Stats | `echo_stats()` | Validate and echo a statistics summary |
+
+### Interactions
+
+Interactions represent the relationship between an input prompt and the response generated by an AI model.
+
+An interaction can contain:
+
+| Field | Required | Description |
+|---|---|---|
+| `prompt` | Yes | A string or list of chat messages |
+| `response` | Yes | Model-generated response |
+| `id` | No | Client-generated interaction identifier |
+| `model` | No | Model name or version |
+| `metadata` | No | Additional key-value information |
+| `session_id` | No | Groups interactions into a conversation |
+| `timestamp` | No | Defaults to current UTC time when omitted |
+
+#### Plain-text prompts
 
 ```python
-from loop import Loop
-
-with Loop() as client:
-
-    result = client.interactions.log_interaction(
-        prompt="Explain machine learning in simple terms.",
-        response="Machine learning is a field of AI...",
-        model="my-model-v1",
-        session_id="session_001",
-        metadata={
-            "application": "chatbot",
-            "version": "1.0",
-        },
-    )
-
-    print(result.result.id)
-    print(result.result.timestamp)
-    print(result.result.stored)
+client.interactions.log_interaction(
+    prompt="Explain artificial intelligence.",
+    response="Artificial intelligence is...",
+    model="model-v1",
+)
 ```
 
-The response contains:
+#### Chat-message prompts
 
-| Property | Description |
-|---|---|
-| `result.id` | Interaction identifier |
-| `result.timestamp` | Interaction timestamp |
-| `result.stored` | API storage indicator; currently `False` |
+Loop also accepts a list of chat messages.
 
-The API acknowledges the interaction, while the SDK is responsible for local persistence.
+```python
+client.interactions.log_interaction(
+    prompt=[
+        {
+            "role": "system",
+            "content": "You are a helpful assistant.",
+        },
+        {
+            "role": "user",
+            "content": "Explain neural networks.",
+        },
+    ],
+    response="Neural networks are computational models...",
+    model="model-v1",
+)
+```
 
-### Log multiple interactions
+Supported chat roles:
 
-For applications that generate multiple responses, use batch logging.
+- `system`
+- `user`
+- `assistant`
+
+#### Client-generated IDs
+
+Developers can supply their own interaction identifier.
+
+```python
+client.interactions.log_interaction(
+    id="int_a1b2c3d4",
+    prompt="What is machine learning?",
+    response="Machine learning is a branch of AI.",
+    model="model-v1",
+)
+```
+
+A client-generated ID is useful when an application needs to associate feedback with an interaction before waiting for a server-generated identifier.
+
+UUID-based identifiers are recommended.
+
+### Batch interactions
+
+Loop supports batch validation of up to 100 interactions in one request.
 
 ```python
 from loop import Loop
@@ -254,56 +412,49 @@ with Loop() as client:
         ]
     )
 
-    print(result)
+    print("IDs:", result.result.ids)
+    print("Count:", result.result.count)
 ```
 
-The batch operation supports up to 100 interactions per request.
+The API returns confirmed identifiers in the same order as the submitted interactions.
 
-### Submit feedback
+The batch endpoint requires at least one interaction and accepts a maximum of 100.
 
-Loop supports positive and negative feedback.
+### Feedback
+
+Feedback connects a user reaction to a previously logged interaction.
 
 ```python
 client.feedback.submit_feedback(
-    interaction_id="YOUR_INTERACTION_ID",
-    rating="up",
-)
-```
-
-For negative feedback, you can include a correction and a comment:
-
-```python
-client.feedback.submit_feedback(
-    interaction_id="YOUR_INTERACTION_ID",
+    interaction_id="int_a1b2c3d4",
     rating="down",
-    correction="A better response goes here.",
-    comment="The original response was inaccurate.",
+    correction="A corrected response.",
+    comment="The original answer contained an error.",
+    user_id="anonymous-user-001",
 )
 ```
-
-Supported feedback fields:
 
 | Field | Required | Description |
 |---|---|---|
-| `interaction_id` | Yes | ID of the interaction |
+| `interaction_id` | Yes | Previously returned interaction ID |
 | `rating` | Yes | `up` or `down` |
-| `correction` | No | Improved response |
+| `correction` | No | Corrected answer |
 | `comment` | No | Additional feedback |
 | `user_id` | No | An anonymized user identifier |
 
-Avoid sending real names, email addresses, or other unnecessary personal information.
+Avoid submitting real names, email addresses, or unnecessary personally identifiable information.
 
 ---
 
-## Dataset generation
+## Training data formats
 
-One of Loop's main goals is to turn feedback into useful training data.
+Loop's API describes three fine-tuning formats.
 
-The project supports three dataset formats.
+The purpose is to organize interaction and feedback information into structures that can be consumed by model-training tools.
 
-### Chat JSONL
+### 1. Chat JSONL
 
-Compatible with OpenAI-style chat fine-tuning workflows and modern training frameworks.
+A conversational format based on messages and roles.
 
 ```json
 {
@@ -320,21 +471,34 @@ Compatible with OpenAI-style chat fine-tuning workflows and modern training fram
 }
 ```
 
-### Alpaca JSONL
+Typical ecosystem:
 
-Instruction, input, and output format.
+- OpenAI-compatible chat fine-tuning workflows
+- LLaMA-Factory
+- Axolotl
+- Other message-based training frameworks
+
+### 2. Alpaca JSONL
+
+An instruction-oriented format.
 
 ```json
 {
-  "instruction": "What is the capital of Pakistan?",
+  "instruction": "Explain machine learning.",
   "input": "",
-  "output": "Islamabad"
+  "output": "Machine learning is a field of artificial intelligence..."
 }
 ```
 
-### DPO JSONL
+Typical ecosystem:
 
-Direct Preference Optimization format, containing a prompt, a preferred response, and a rejected response.
+- Alpaca-compatible workflows
+- LLaMA-Factory
+- Instruction fine-tuning pipelines
+
+### 3. DPO JSONL
+
+Direct Preference Optimization uses a preferred and rejected response for the same prompt.
 
 ```json
 {
@@ -344,66 +508,64 @@ Direct Preference Optimization format, containing a prompt, a preferred response
 }
 ```
 
-### How feedback maps to training data
+Typical ecosystem:
 
-| Feedback | Dataset behavior |
+- Hugging Face TRL
+- Axolotl
+- Unsloth
+
+### Feedback-to-training mapping
+
+The current Loop design defines the following mapping:
+
+| Feedback | Training interpretation |
 |---|---|
-| `up` without correction | Positive supervised fine-tuning example |
-| `down` with correction | DPO preference pair and corrected SFT example |
-| `down` without correction | Recorded for feedback statistics; not used as a training example |
+| `up`, without correction | Positive supervised fine-tuning example |
+| `down`, with correction | Corrected SFT target and DPO preference pair |
+| `down`, without correction | Feedback signal; not a complete training example |
 
-A correction is treated as the preferred response in the current DPO mapping. Developers should review generated preference pairs before using them for training.
+For a negative response with a correction:
 
-### Supported formats and ecosystem
+```text
+Prompt:
+    What is the capital of Pakistan?
 
-| Format | Typical ecosystem |
-|---|---|
-| Chat JSONL | OpenAI fine-tuning, LLaMA-Factory, Axolotl |
-| Alpaca JSONL | Alpaca-compatible trainers, LLaMA-Factory |
-| DPO JSONL | Hugging Face TRL, Axolotl, Unsloth |
+Original response:
+    Karachi
 
-The API exposes `export_formats()` to retrieve the supported format schemas. Dataset generation is part of the local-data workflow; consult the SDK implementation for the exact exporter interface and command available in your installed version.
+User correction:
+    Islamabad
 
----
-
-## Available resources and operations
-
-The Python SDK exposes the following resources:
-
-| Resource | Method | Purpose |
-|---|---|---|
-| Health | `health()` | Check API availability |
-| Interactions | `log_interaction()` | Log one interaction |
-| Interactions | `log_interactions_batch()` | Log multiple interactions |
-| Feedback | `submit_feedback()` | Submit human feedback |
-| Export | `export_formats()` | Retrieve supported dataset schemas |
-| Stats | `echo_stats()` | Submit and receive a statistics summary |
-
-### Health check
-
-```python
-from loop import Loop
-
-with Loop() as client:
-    result = client.health.health()
-    print(result)
+DPO:
+    chosen   = Islamabad
+    rejected = Karachi
 ```
 
-### Retrieve export formats
+**Important:** A user correction is treated as the preferred response in this mapping. Corrections should be reviewed for factual accuracy and quality before being used as training labels.
+
+### Retrieve available formats
+
+The SDK provides an operation for retrieving export format definitions.
 
 ```python
 from loop import Loop
 
 with Loop() as client:
+
     formats = client.export.export_formats()
-    print(formats)
+
+    print(formats.result.formats)
 ```
+
+This endpoint returns format descriptions and schema examples. It does not upload or download training datasets.
+
+The actual local dataset-generation workflow is part of the intended architecture and should be verified against the installed SDK implementation before being used as a production export command.
 
 ---
 
-## Asynchronous usage
+## Asynchronous support
 
-Loop also supports asynchronous requests.
+Loop provides asynchronous versions of its SDK operations.
 
 ```python
 import asyncio
@@ -415,42 +577,101 @@ async def main():
 
     async with Loop() as client:
 
-        result = await client.health.health_async()
+        interaction = await client.interactions.log_interaction_async(
+            prompt="Explain transformers.",
+            response="Transformers are neural network architectures...",
+            model="transformer-model-v1",
+        )
 
-        print(result)
+        print(interaction.result.id)
 
 
 asyncio.run(main())
 ```
 
-Use the asynchronous client in applications built around `asyncio`, such as asynchronous web servers and AI applications.
+Asynchronous feedback:
+
+```python
+async def submit_feedback():
+
+    async with Loop() as client:
+
+        result = await client.feedback.submit_feedback_async(
+            interaction_id="int_a1b2c3d4",
+            rating="up",
+        )
+
+        print(result)
+```
+
+Asynchronous operations are useful when integrating Loop into applications built around `asyncio`, asynchronous APIs, and other non-blocking workflows.
+
+---
+
+## API reference
+
+The Loop API is built using FastAPI and exposes the following endpoints.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/v1/health` | API health and version |
+| `POST` | `/v1/interactions` | Validate an interaction |
+| `POST` | `/v1/interactions/batch` | Validate multiple interactions |
+| `POST` | `/v1/feedback` | Validate and acknowledge feedback |
+| `GET` | `/v1/export/formats` | Return dataset format definitions |
+| `POST` | `/v1/stats` | Validate and echo statistics |
+
+### API documentation
+
+The interactive Swagger documentation is available at:
+
+https://loop-systematic-architecture-api-index.vercel.app/docs
+
+### Request IDs
+
+API responses include an `X-Request-Id` header for request tracing.
+
+### Error response structure
+
+Validation errors use a structured JSON response.
+
+```json
+{
+  "error": {
+    "type": "validation_error",
+    "message": "Invalid request",
+    "request_id": "uuid"
+  }
+}
+```
+
+The API uses HTTP `422` for request validation failures.
 
 ---
 
 ## Configuration
 
-The SDK can be configured when initializing the client.
+The SDK can be configured at initialization.
 
 ### Server selection
 
-Loop provides two server configurations:
+Two servers are currently defined.
 
-| Index | Server | Description |
+| Index | URL | Environment |
 |---|---|---|
 | `0` | `https://loop-systematic-architecture-api-index.vercel.app` | Production |
 | `1` | `http://localhost:8000` | Local development |
 
-Select a server by index:
+#### Select a server by index
 
 ```python
 from loop import Loop
 
 with Loop(server_idx=0) as client:
-    result = client.health.health()
-    print(result)
+    print(client.health.health())
 ```
 
-Alternatively, provide a custom server URL:
+#### Override the server URL
 
 ```python
 from loop import Loop
@@ -459,50 +680,60 @@ with Loop(
     server_url="http://localhost:8000",
 ) as client:
 
-    result = client.health.health()
-    print(result)
+    print(client.health.health())
 ```
 
-### Timeout configuration
+### Timeout
 
-The SDK supports a configurable request timeout.
+The SDK accepts a request timeout in milliseconds.
 
 ```python
 from loop import Loop
 
 with Loop(timeout_ms=30000) as client:
-    result = client.health.health()
-    print(result)
+    print(client.health.health())
 ```
 
-The default timeout is 30 seconds.
+The generated SDK uses HTTPX for network communication.
+
+### Custom HTTP client
+
+You can supply your own synchronous HTTPX client.
+
+```python
+import httpx
+
+from loop import Loop
+
+http_client = httpx.Client(
+    headers={
+        "x-custom-header": "some-value",
+    }
+)
+
+with Loop(client=http_client) as client:
+    print(client.health.health())
+```
+
+The SDK also accepts a custom asynchronous HTTP client through `async_client`.
 
 ---
 
 ## Retries
 
-The SDK supports configurable retry behavior for operations that support retries.
+Loop supports configurable retry behavior for operations that support retries.
 
-You can override the retry strategy for a single request:
+The retry configuration supports:
 
-```python
-from loop import Loop
-from loop.utils import BackoffStrategy, RetryConfig
+- Backoff strategy.
+- Initial retry interval.
+- Maximum retry interval.
+- Exponential growth factor.
+- Maximum elapsed time.
+- Optional connection-error retries.
+- Optional retryable status-code overrides.
 
-with Loop() as client:
-
-    result = client.health.health(
-        retry_config=RetryConfig(
-            "backoff",
-            BackoffStrategy(1, 50, 1.1, 100),
-            False,
-        )
-    )
-
-    print(result)
-```
-
-You can also configure retries when initializing the client:
+### Configure retries globally
 
 ```python
 from loop import Loop
@@ -510,34 +741,60 @@ from loop.utils import BackoffStrategy, RetryConfig
 
 retry = RetryConfig(
     "backoff",
-    BackoffStrategy(1, 50, 1.1, 100),
-    False,
+    BackoffStrategy(
+        initial_interval=500,
+        max_interval=60000,
+        exponent=1.5,
+        max_elapsed_time=300000,
+    ),
+    retry_connection_errors=True,
 )
 
 with Loop(retry_config=retry) as client:
 
-    result = client.health.health()
-    print(result)
+    response = client.health.health()
+
+    print(response)
 ```
 
-Check the individual operation documentation for retry support and applicable configuration.
+### Configure retries per operation
+
+```python
+from loop import Loop
+from loop.utils import BackoffStrategy, RetryConfig
+
+retry = RetryConfig(
+    "backoff",
+    BackoffStrategy(500, 60000, 1.5, 300000),
+    True,
+)
+
+with Loop() as client:
+
+    response = client.health.health(
+        retries=retry,
+    )
+
+    print(response)
+```
+
+Retry behavior is limited to operations that support it. Check the operation documentation for details.
 
 ---
 
 ## Error handling
 
-Loop provides a common base exception called `LoopError` for HTTP error responses.
+The SDK exposes a base exception named `LoopError`.
 
-It exposes useful information about the failed request.
+It provides information about failed HTTP requests.
 
 | Property | Type | Description |
 |---|---|---|
 | `message` | `str` | Error message |
 | `status_code` | `int` | HTTP status code |
 | `headers` | `httpx.Headers` | Response headers |
-| `body` | `str` | Raw response body |
-| `raw_response` | `httpx.Response` | Underlying HTTP response |
-| `data` | Optional | Structured error information, when available |
+| `body` | `str` | Response body |
+| `raw_response` | `httpx.Response` | Original HTTPX response |
 
 ### Example
 
@@ -551,7 +808,7 @@ with Loop() as client:
         result = client.interactions.log_interaction(
             prompt="What is the capital of Pakistan?",
             response="Islamabad",
-            model="my-model-v1",
+            model="model-v1",
         )
 
         print(result)
@@ -567,63 +824,39 @@ with Loop() as client:
             print(error.data.error)
 ```
 
-### Primary exception
+### Error classes
 
-- `LoopError`: Base class for HTTP error responses.
+| Error | Purpose |
+|---|---|
+| `LoopError` | Base class for HTTP errors |
+| `ErrorResponse` | Structured API validation error |
+| `LoopDefaultError` | Fallback HTTP error |
+| `ResponseValidationError` | Unexpected response structure |
+| `httpx.RequestError` | Network request failure |
+| `httpx.ConnectError` | Connection failure |
+| `httpx.TimeoutException` | Request timeout |
 
-For operation-specific errors, refer to the method documentation.
-
----
-
-## Custom HTTP clients
-
-The Loop SDK uses `httpx` for HTTP communication.
-
-You can provide your own HTTP client to customize request behavior, including headers, proxies, timeouts, and other HTTP configuration.
-
-### Custom synchronous client
-
-```python
-import httpx
-
-from loop import Loop
-
-http_client = httpx.Client(
-    headers={
-        "x-custom-header": "someValue",
-    }
-)
-
-with Loop(client=http_client) as client:
-    result = client.health.health()
-    print(result)
-```
-
-### Custom asynchronous client
-
-The SDK also supports custom asynchronous HTTP clients through its async client interface.
-
-This can be useful when integrating Loop into applications that already manage their own HTTP connections.
+The SDK also exposes the underlying HTTPX response for further inspection.
 
 ---
 
 ## Resource management
 
-The `Loop` client supports context managers.
-
-Use a context manager to ensure HTTP connections are properly closed when your application finishes using the SDK.
+Loop supports context managers for both synchronous and asynchronous clients.
 
 ### Synchronous
 
 ```python
 from loop import Loop
 
+
 def main():
 
     with Loop() as client:
 
-        result = client.health.health()
-        print(result)
+        response = client.health.health()
+
+        print(response)
 
 
 if __name__ == "__main__":
@@ -642,22 +875,25 @@ async def main():
 
     async with Loop() as client:
 
-        result = await client.health.health_async()
-        print(result)
+        response = await client.health.health_async()
+
+        print(response)
 
 
 asyncio.run(main())
 ```
 
-For long-running applications, create and reuse an appropriate client instance rather than repeatedly creating new clients for every request.
+Context managers close the SDK-managed HTTP connections when the client exits.
+
+For long-running applications, reuse a client instance where appropriate rather than repeatedly creating clients for individual operations.
 
 ---
 
 ## Debugging
 
-Loop supports debug logging for SDK requests and responses.
+Loop supports SDK request and response logging.
 
-### Enable debug logging in Python
+### Enable debug logging
 
 ```python
 import logging
@@ -670,63 +906,41 @@ with Loop(
     debug_logger=logging.getLogger("loop"),
 ) as client:
 
-    result = client.health.health()
-    print(result)
+    response = client.health.health()
+
+    print(response)
 ```
 
-### Enable debug mode using an environment variable
+### Environment variable
 
-Set:
+You can also enable the default logger with:
 
 ```bash
 LOOP_DEBUG=true
 ```
 
-Supported truthy values include:
+Supported truthy values:
 
-- `true`
-- `1`
-- `yes`
-- `on`
+```text
+true
+1
+yes
+on
+```
 
-Any other value leaves debug logging disabled.
-
-Be careful when enabling request logging in production. Logs may contain prompts, responses, or other application data.
+Debug logging should be used carefully because application requests may contain prompts, responses, metadata, or other sensitive content.
 
 ---
 
-## API reference
+## IDE support
 
-The Loop API is built with FastAPI and provides the following endpoints.
+Loop uses Pydantic models and typed Python interfaces.
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `GET` | `/v1/health` | Health check |
-| `POST` | `/v1/interactions` | Validate an interaction |
-| `POST` | `/v1/interactions/batch` | Validate multiple interactions |
-| `POST` | `/v1/feedback` | Validate feedback |
-| `GET` | `/v1/export/formats` | Retrieve supported export schemas |
-| `POST` | `/v1/stats` | Validate and echo statistics |
+It should work with standard Python IDEs and editors.
 
-**Interactive API documentation:**
+For PyCharm, the Pydantic plugin can improve editor integration:
 
-https://loop-systematic-architecture-api-index.vercel.app/docs
-
-### Response identifiers
-
-API responses include an `X-Request-Id` header.
-
-Error responses use a structured format:
-
-```json
-{
-  "error": {
-    "type": "validation_error",
-    "message": "Invalid request",
-    "request_id": "uuid"
-  }
-}
-```
+https://docs.pydantic.dev/latest/integrations/pycharm/
 
 ---
 
@@ -737,10 +951,11 @@ Error responses use a structured format:
 - Python 3.10+
 - pip
 - Git
+- FastAPI
+- Pydantic
+- Uvicorn
 
-### Run the API locally
-
-Clone the repository:
+### Clone the repository
 
 ```bash
 git clone https://github.com/ahmadjamilofficial/Loop.git
@@ -748,28 +963,42 @@ git clone https://github.com/ahmadjamilofficial/Loop.git
 cd Loop
 ```
 
-Install the API dependencies:
+### Install API dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Start the development server:
+### Run the API locally
 
 ```bash
 uvicorn api.app.main:app --reload --port 8000
 ```
 
-The local API will be available at:
+The API will be available at:
 
 ```text
 http://localhost:8000
 ```
 
-Interactive documentation:
+Swagger documentation:
 
 ```text
 http://localhost:8000/docs
+```
+
+### Python SDK development
+
+The SDK source is located in:
+
+```text
+loop-python/
+```
+
+Install the SDK from the repository:
+
+```bash
+pip install -e ./loop-python
 ```
 
 ### Repository structure
@@ -792,117 +1021,139 @@ Loop/
 │           └── stats.py
 │
 ├── loop-python/
-│   └── src/
-│       └── loop/
-│           ├── sdk.py
-│           ├── interactions.py
-│           ├── feedback.py
-│           ├── health.py
-│           ├── export.py
-│           └── stats.py
+│   ├── src/
+│   │   └── loop/
+│   │       ├── sdk.py
+│   │       ├── interactions.py
+│   │       ├── feedback.py
+│   │       ├── health.py
+│   │       ├── export.py
+│   │       ├── stats.py
+│   │       ├── models/
+│   │       ├── errors/
+│   │       └── utils/
+│   │
+│   ├── docs/
+│   │   ├── sdks/
+│   │   │   ├── export/
+│   │   │   ├── feedback/
+│   │   │   ├── health/
+│   │   │   ├── interactions/
+│   │   │   └── stats/
+│   │   │
+│   │   └── models/
+│   │
+│   ├── .speakeasy/
+│   │   └── workflow.yaml
+│   │
+│   ├── pyproject.toml
+│   ├── README.md
+│   └── README-PYPI.md
 │
 ├── openapi/
 │   └── openapi.json
 │
-├── .speakeasy/
-│   └── workflow.yaml
-│
 ├── .github/
 │   └── workflows/
-│       ├── sdk_generation.yaml
-│       └── sdk_publish.yaml
 │
 ├── requirements.txt
 ├── vercel.json
 └── README.md
 ```
 
-### Environment variables
-
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `LOOP_DEBUG` | No | `false` | Enable SDK debug logging |
-| `DATABASE_URL` | No | `sqlite:///./loop.db` | Optional database configuration |
-
-The current stateless API does not require a database for its standard validation and acknowledgement workflow. Database configuration is optional and should not be interpreted as evidence that interaction data is persisted by the hosted service.
-
 ---
 
 ## SDK generation
 
-Loop's Python SDK is generated using **Speakeasy**.
+Loop's Python SDK is generated using [Speakeasy](https://www.speakeasy.com/).
 
-The OpenAPI specification acts as the source of truth for SDK generation.
+The OpenAPI specification is the source of truth for the SDK.
 
-Key components:
-
-- `openapi/openapi.json` — API specification.
-- `.speakeasy/workflow.yaml` — SDK generation configuration.
-- `loop-python/` — Generated Python SDK.
-- GitHub Actions — Automated SDK generation and publishing workflows.
-
-Because the SDK is generated programmatically, manual modifications to generated files may be overwritten during regeneration.
-
----
-
-## Maturity
-
-<sub>Beta software</sub>
-
-Loop is currently in beta. APIs and SDK interfaces may change between releases, including potentially breaking changes.
-
-For applications that depend on Loop, pin your installation to a specific version or Git commit when appropriate.
-
-The project is evolving, and production users should test their integration carefully before relying on it for critical workflows.
-
----
-
-## Privacy and data handling
-
-Loop is designed around a local-first data model.
-
-- Interaction records are written to the user's local machine.
-- Feedback records are written to the user's local machine.
-- The hosted API validates requests and returns acknowledgements.
-- The standard API workflow does not require user accounts.
-- Developers control their local JSONL data.
-
-Local storage location:
+### Generation workflow
 
 ```text
-~/.loop/
+OpenAPI Specification
+        |
+        v
+   Speakeasy Source
+        |
+        v
+  Python SDK Generation
+        |
+        v
+    loop-python/
+        |
+        v
+ GitHub Actions Workflows
+        |
+        v
+   SDK Distribution
 ```
 
-Developers remain responsible for protecting local files, managing backups, and avoiding unnecessary personal or sensitive information in prompts, metadata, and feedback.
+Important project files:
+
+| File | Purpose |
+|---|---|
+| `openapi/openapi.json` | OpenAPI 3.1 specification |
+| `loop-python/.speakeasy/workflow.yaml` | SDK generation workflow |
+| `loop-python/pyproject.toml` | Python package metadata |
+| `loop-python/src/loop/` | Generated SDK implementation |
+| `.github/workflows/` | Automation workflows |
+
+Generated SDK files should not be modified manually unless the change is intended to be maintained through the generation process.
 
 ---
+
+## Current maturity
+
+<sub>Beta</sub>
+
+Loop is actively evolving.
+
+The current release should be treated as beta software. Interfaces, request models, and generated SDK methods may change between releases.
+
+Before using Loop in production:
+
+- Pin the SDK to a specific version.
+- Test request and response handling.
+- Validate generated training data.
+- Review data-handling and privacy requirements.
+- Verify local persistence and export functionality in the installed version.
+
 
 ## Contributing
 
-Contributions, bug reports, ideas, and improvements are welcome.
+Contributions are welcome.
 
-If you find a problem or have an idea for Loop:
+You can contribute through:
 
-1. Open an issue describing the problem or proposal.
-2. Include a reproducible example when possible.
-3. Submit a pull request with your changes.
+- Bug reports.
+- Feature requests.
+- Documentation improvements.
+- SDK improvements.
+- API enhancements.
+- Testing and reproducible examples.
 
-Since the Python SDK is generated programmatically, changes to generated files should be made through the appropriate source specification or generation workflow whenever possible.
+For generated SDK changes, update the appropriate source specification or generation configuration where possible.
+
+Open an issue or submit a pull request:
+
+https://github.com/ahmadjamilofficial/Loop
 
 ---
 
 ## License
 
-Loop is released under the **MIT License**.
+Loop's OpenAPI specification identifies the project as MIT-licensed.
 
-See the [LICENSE](LICENSE) file for details.
+The Python package metadata currently declares Apache-2.0, so the repository and package license metadata should be reconciled before release.
 
 ---
 
 <p align="center">
   <strong>Loop</strong>
-  <br/>
+  <br>
   Close the feedback loop. Build better AI.
-  <br/><br/>
-  <a href="https://github.com/ahmadjamilofficial/Loop">GitHub Repository</a>
+  <br><br>
+  <a href="https://github.com/ahmadjamilofficial/Loop">Explore the repository</a>
 </p>
