@@ -1,0 +1,483 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Loop API",
+    "description": "Stateless validation API for the Loop RLHF SDK.\n\nThis server stores nothing. All interaction and feedback data is written to the user's local machine by the SDK at ~/.loop/. The API validates requests, generates IDs, and serves this spec so Stainless can generate typed SDKs.\n\nFlow:\n1. SDK calls POST /v1/interactions — server validates and returns a confirmed ID.\n2. SDK writes the interaction to ~/.loop/interactions.jsonl.\n3. SDK prompts the user for feedback (like/dislike + optional correction).\n4. SDK calls POST /v1/feedback — server validates and acks.\n5. SDK writes the feedback to ~/.loop/feedback.jsonl.\n6. User runs `loop export` — SDK reads local storage and writes a fine-tuning JSONL file.",
+    "version": "0.1.0",
+    "contact": {
+      "url": "https://loop-systematic-architecture-api-index.vercel.app"
+    },
+    "license": { "name": "MIT" }
+  },
+  "servers": [
+    {
+      "url": "https://loop-systematic-architecture-api-index.vercel.app",
+      "description": "Production (Vercel)"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development"
+    }
+  ],
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "operationId": "health",
+        "description": "Returns API status and version. Use this to verify connectivity.",
+        "responses": {
+          "200": {
+            "description": "API is running",
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/XRequestId" } },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" },
+                "example": { "status": "ok", "version": "0.1.0" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/interactions": {
+      "post": {
+        "tags": ["Interactions"],
+        "summary": "Log an interaction",
+        "operationId": "log_interaction",
+        "description": "Validates a prompt/response pair and returns a confirmed ID.\n\nThe server stores nothing. The SDK writes this record to ~/.loop/interactions.jsonl before or after calling this endpoint.\n\nSupply your own `id` (any string, UUID recommended) so the SDK can reference it immediately in feedback() without waiting for the network.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InteractionCreate" },
+              "example": {
+                "id": "int_a1b2c3d4",
+                "prompt": "What is the capital of Pakistan?",
+                "response": "Islamabad",
+                "model": "my-model-v1",
+                "metadata": { "user_tier": "free" },
+                "session_id": "sess_abc123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Interaction validated. ID confirmed.",
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/XRequestId" } },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InteractionAck" },
+                "example": {
+                  "id": "int_a1b2c3d4",
+                  "timestamp": "2026-11-14T10:00:00Z",
+                  "stored": false
+                }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/v1/interactions/batch": {
+      "post": {
+        "tags": ["Interactions"],
+        "summary": "Log a batch of interactions",
+        "operationId": "log_interactions_batch",
+        "description": "Validates up to 100 interactions in one call and returns their confirmed IDs in order.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InteractionBatchCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Batch validated.",
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/XRequestId" } },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InteractionBatchAck" },
+                "example": { "ids": ["id-1", "id-2", "id-3"], "count": 3, "stored": false }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/v1/feedback": {
+      "post": {
+        "tags": ["Feedback"],
+        "summary": "Submit feedback",
+        "operationId": "submit_feedback",
+        "description": "Records a user's reaction to a model response.\n\n`rating` must be `up` (the response was good) or `down` (the response was bad).\n\nIf the model was wrong, pass the correct answer in `correction`. It becomes the target response for fine-tuning: the `chosen` side of a DPO pair, or the gold label in supervised fine-tuning.\n\nThe server validates and acks. The SDK writes the record to ~/.loop/feedback.jsonl.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FeedbackCreate" },
+              "examples": {
+                "thumbs_up": {
+                  "summary": "Simple thumbs up",
+                  "value": {
+                    "interaction_id": "int_a1b2c3d4",
+                    "rating": "up"
+                  }
+                },
+                "thumbs_down_with_correction": {
+                  "summary": "Thumbs down with correction",
+                  "value": {
+                    "interaction_id": "int_a1b2c3d4",
+                    "rating": "down",
+                    "correction": "The capital of Pakistan is Islamabad.",
+                    "comment": "Response was missing context."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Feedback validated and acked.",
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/XRequestId" } },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FeedbackAck" },
+                "example": {
+                  "id": "fb_uuid",
+                  "interaction_id": "int_a1b2c3d4",
+                  "rating": "down",
+                  "has_correction": true,
+                  "stored": false
+                }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/v1/export/formats": {
+      "get": {
+        "tags": ["Export"],
+        "summary": "List export formats",
+        "operationId": "export_formats",
+        "description": "Returns the schemas for each supported fine-tuning export format.\n\nThe SDK uses these schemas when it exports from local storage. No data is sent to or from the server — this endpoint just describes the wire format so the SDK can write correct files.",
+        "responses": {
+          "200": {
+            "description": "Available export formats and their schemas.",
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/XRequestId" } },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExportFormatsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stats": {
+      "post": {
+        "tags": ["Stats"],
+        "summary": "Echo stats summary",
+        "operationId": "echo_stats",
+        "description": "The SDK computes stats from local storage and POSTs them here for validation. The server echoes the summary back. Nothing is stored.\n\nUsed by the `loop stats` CLI command to display a validated summary.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StatsSummary" },
+              "example": {
+                "total_interactions": 142,
+                "total_feedback": 98,
+                "thumbs_up": 71,
+                "thumbs_down": 27,
+                "with_correction": 19,
+                "without_correction": 8,
+                "models": ["my-model-v1", "my-model-v2"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validated stats echoed back.",
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/XRequestId" } },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StatsSummary" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "headers": {
+      "XRequestId": {
+        "description": "Unique request identifier for tracing.",
+        "schema": { "type": "string", "format": "uuid" }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Request body failed validation.",
+        "headers": { "X-Request-Id": { "$ref": "#/components/headers/XRequestId" } },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorDetail": {
+        "type": "object",
+        "required": ["type", "message", "request_id"],
+        "properties": {
+          "type": { "type": "string" },
+          "message": { "type": "string" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "$ref": "#/components/schemas/ErrorDetail" }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "version"],
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "version": { "type": "string", "example": "0.1.0" }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "required": ["role", "content"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["system", "user", "assistant"],
+            "description": "The speaker of this message."
+          },
+          "content": { "type": "string" }
+        }
+      },
+      "InteractionCreate": {
+        "type": "object",
+        "required": ["prompt", "response"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client-generated ID. Recommended: use a UUID prefixed with 'int_'. If omitted the server generates one."
+          },
+          "prompt": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/ChatMessage" }
+              }
+            ],
+            "description": "Plain string or list of chat messages."
+          },
+          "response": {
+            "type": "string",
+            "description": "The model's response."
+          },
+          "model": {
+            "type": "string",
+            "nullable": true,
+            "description": "Model name or version identifier. Used to filter exports by model."
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Any extra key/value pairs you want to attach."
+          },
+          "session_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Groups multiple interactions into a conversation."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Defaults to current UTC time if omitted."
+          }
+        }
+      },
+      "InteractionAck": {
+        "type": "object",
+        "required": ["id", "timestamp", "stored"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The confirmed interaction ID. Pass this to feedback()."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stored": {
+            "type": "boolean",
+            "const": false,
+            "description": "Always false. The server stores nothing. The SDK writes to local storage."
+          }
+        }
+      },
+      "InteractionBatchCreate": {
+        "type": "object",
+        "required": ["interactions"],
+        "properties": {
+          "interactions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InteractionCreate" },
+            "minItems": 1,
+            "maxItems": 100
+          }
+        }
+      },
+      "InteractionBatchAck": {
+        "type": "object",
+        "required": ["ids", "count", "stored"],
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Confirmed IDs in the same order as the input interactions."
+          },
+          "count": { "type": "integer" },
+          "stored": { "type": "boolean", "const": false }
+        }
+      },
+      "FeedbackCreate": {
+        "type": "object",
+        "required": ["interaction_id", "rating"],
+        "properties": {
+          "interaction_id": {
+            "type": "string",
+            "description": "ID returned by log_interaction or log_interactions_batch."
+          },
+          "rating": {
+            "type": "string",
+            "enum": ["up", "down"],
+            "description": "'up' means the response was good. 'down' means the response was bad."
+          },
+          "correction": {
+            "type": "string",
+            "nullable": true,
+            "description": "The correct answer. Used as the training target. For DPO: becomes 'chosen'. For SFT: becomes the gold label."
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text comment from the user."
+          },
+          "user_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Anonymised user identifier. Never use real PII here."
+          }
+        }
+      },
+      "FeedbackAck": {
+        "type": "object",
+        "required": ["id", "interaction_id", "rating", "has_correction", "stored"],
+        "properties": {
+          "id": { "type": "string", "description": "Generated feedback ID." },
+          "interaction_id": { "type": "string" },
+          "rating": { "type": "string", "enum": ["up", "down"] },
+          "has_correction": {
+            "type": "boolean",
+            "description": "True if a correction was provided."
+          },
+          "stored": { "type": "boolean", "const": false }
+        }
+      },
+      "ExportFormat": {
+        "type": "object",
+        "required": ["format", "description", "schema_example"],
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": ["chat_jsonl", "alpaca_jsonl", "dpo_jsonl"]
+          },
+          "description": { "type": "string" },
+          "schema_example": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ExportFormatsResponse": {
+        "type": "object",
+        "required": ["formats"],
+        "properties": {
+          "formats": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExportFormat" }
+          }
+        }
+      },
+      "StatsSummary": {
+        "type": "object",
+        "required": [
+          "total_interactions", "total_feedback",
+          "thumbs_up", "thumbs_down",
+          "with_correction", "without_correction"
+        ],
+        "properties": {
+          "total_interactions": { "type": "integer" },
+          "total_feedback": { "type": "integer" },
+          "thumbs_up": { "type": "integer" },
+          "thumbs_down": { "type": "integer" },
+          "with_correction": { "type": "integer" },
+          "without_correction": { "type": "integer" },
+          "models": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "API connectivity check."
+    },
+    {
+      "name": "Interactions",
+      "description": "Log prompt/response pairs. The server validates and returns a confirmed ID. The SDK writes locally."
+    },
+    {
+      "name": "Feedback",
+      "description": "Submit user reactions (like/dislike + optional correction). The server validates and acks. The SDK writes locally."
+    },
+    {
+      "name": "Export",
+      "description": "Describes the fine-tuning export formats. The SDK exports from local storage — no data passes through the server."
+    },
+    {
+      "name": "Stats",
+      "description": "SDK-computed stats echoed back for validation."
+    }
+  ]
+}

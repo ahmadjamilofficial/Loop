@@ -1,0 +1,38 @@
+speakeasyVersion: 1.809.0
+sources:
+    loop-OAS:
+        sourceNamespace: loop-oas
+        sourceRevisionDigest: sha256:5492fd96a53d21740b086688325b803b0c60ad995628cb3a049887ce8f384328
+        sourceBlobDigest: sha256:e835f076fa2983414d55827c0a4dd3f78e35a149e039a9ce9ad7048b47b80963
+        tags:
+            - latest
+            - 0.1.0
+targets:
+    loop:
+        source: loop-OAS
+        sourceNamespace: loop-oas
+        sourceRevisionDigest: sha256:5492fd96a53d21740b086688325b803b0c60ad995628cb3a049887ce8f384328
+        sourceBlobDigest: sha256:e835f076fa2983414d55827c0a4dd3f78e35a149e039a9ce9ad7048b47b80963
+        codeSamplesNamespace: loop-oas-python-code-samples
+        codeSamplesRevisionDigest: sha256:cd946b5d7177efb5b91fad75e9cd304a92c84d495ffb2f986a783b1926fd77f1
+workflow:
+    workflowVersion: 1.0.0
+    speakeasyVersion: latest
+    sources:
+        loop-OAS:
+            inputs:
+                - location: https://raw.githubusercontent.com/ahmadjamilofficial/Loop/main/openapi/openapi.json
+            output: .speakeasy/out.openapi.yaml
+            registry:
+                location: registry.speakeasyapi.dev/zehanxtech/loop/loop-oas
+    targets:
+        loop:
+            target: python
+            source: loop-OAS
+            output: ./loop-python
+            codeSamples:
+                registry:
+                    location: registry.speakeasyapi.dev/zehanxtech/loop/loop-oas-python-code-samples
+                labelOverride:
+                    fixedValue: Python (SDK)
+                blocking: false

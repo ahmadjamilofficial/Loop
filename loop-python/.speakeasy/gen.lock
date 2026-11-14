@@ -5,12 +5,15 @@ management:
   docVersion: 0.1.0
   speakeasyVersion: 1.809.0
   generationVersion: 2.961.1
-  releaseVersion: 0.0.1
-  configChecksum: ffdc5172abc06fbefca266db37d9e30c
+  releaseVersion: 0.0.2
+  configChecksum: fb6db19f2109f6058e0408beab3eb8c1
+  repoURL: https://github.com/ahmadjamilofficial/Loop.git
+  repoSubDirectory: loop-python
+  installationURL: https://github.com/ahmadjamilofficial/Loop.git#subdirectory=loop-python
 persistentEdits:
-  generation_id: 0d576d11-1186-43d9-82af-396b971b665d
-  pristine_commit_hash: 93b12f75724ca1f91bc34654112965b1ab061f83
-  pristine_tree_hash: 332c6dcce0a811bb35a68763dd8bb55c00e33580
+  generation_id: 80c52878-acde-4452-bc31-78b6a7c5432b
+  pristine_commit_hash: 789f5beb9d108bee3a7386b49495fdd9e12939fc
+  pristine_tree_hash: 8c5cb05b9345a813d7347ac27772163395e3cf9d
 features:
   python:
     additionalDependencies: 1.1.0
@@ -32,8 +35,8 @@ features:
 trackedFiles:
   .devcontainer/README.md:
     id: b170c0f184ac
-    last_write_checksum: sha1:3c63dfd4dcea8df0d4add09e975a6887e6da4aab
-    pristine_git_object: 396929ab2e57cf09dd25ec83bd4496f733b95701
+    last_write_checksum: sha1:c1872633ac69a1b59c4b7dd0230dd1a4aaef55d0
+    pristine_git_object: b488822357b31e94d4076952a63a80622f010915
   .devcontainer/devcontainer.json:
     id: b34062a34eb1
     last_write_checksum: sha1:94309e8c8eab5ab063986bf625f513a59825e947
@@ -184,12 +187,16 @@ trackedFiles:
     pristine_git_object: c00200cfd072e9febac5d6be783da1925d11dac0
   pyproject.toml:
     id: 5d07e7d72637
-    last_write_checksum: sha1:b16608bcc3098c2fe033c44a5712368ffb93f892
-    pristine_git_object: d8fef94c72b553679b538a1fc08e5f1bb9b70f1c
+    last_write_checksum: sha1:59176a4641c569ea7c7ec9100af8d7b762c57461
+    pristine_git_object: 1830a791a4cda4a97b56dc83c64f9f8e917a2322
+  scripts/prepare_readme.py:
+    id: e0c5957a6035
+    last_write_checksum: sha1:dbdb5eb9d65d7e161679f68e6fe5a7f5f36db184
+    pristine_git_object: 41e3ee7ed0d403c294ee06c25973e6ed86c859d1
   scripts/publish.sh:
     id: fe273b08f514
-    last_write_checksum: sha1:adc9b741c12ad1591ab4870eabe20f0d0a86cd1a
-    pristine_git_object: ef28dc10c60d7d6a4bac0c6a1e9caba36b471861
+    last_write_checksum: sha1:b290b25b36dca3d5eb1a2e66a2e1bcf2e7326cf3
+    pristine_git_object: c35748f360329c2bc370e9b189f49b1a360b2c48
   src/loop/__init__.py:
     id: c303f5dca36d
     last_write_checksum: sha1:da077c0bdfcef64a4a5aea91a17292f72fa2b088
@@ -208,8 +215,8 @@ trackedFiles:
     pristine_git_object: ded78da9929e9379ab815bd0b63d10f529fdf962
   src/loop/_version.py:
     id: c121c6eef63d
-    last_write_checksum: sha1:8975390e355bb9ba8a3884630e03445a5c629228
-    pristine_git_object: 64bc34648b13ebb3d2a04b0a8b1f3aeffa851a91
+    last_write_checksum: sha1:2c38a5197ab8eabfadc821a09708e2deab4bc57e
+    pristine_git_object: b0d9e5d6eb5639702c38d25e82d3916e5c58d4c0
   src/loop/basesdk.py:
     id: 7860d9923547
     last_write_checksum: sha1:c828b5b2c2d5f054721fcbd03f22fed19bbf3131
