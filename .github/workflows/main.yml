@@ -1,0 +1,22 @@
+workflowVersion: 1.0.0
+speakeasyVersion: latest
+sources:
+    loop-OAS:
+        inputs:
+            - location: https://raw.githubusercontent.com/ahmadjamilofficial/Loop/main/openapi/openapi.json
+        output: .speakeasy/out.openapi.yaml
+        registry:
+            location: registry.speakeasyapi.dev/zehanxtech/loop/loop-oas
+targets:
+    loop:
+        target: python
+        source: loop-OAS
+        publish:
+            pypi:
+                token: $PYPI_TOKEN
+        codeSamples:
+            registry:
+                location: registry.speakeasyapi.dev/zehanxtech/loop/loop-oas-python-code-samples
+            labelOverride:
+                fixedValue: Python (SDK)
+            blocking: false
