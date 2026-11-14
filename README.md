@@ -15,10 +15,10 @@
 </p>
 
 <p align="center">
-  [Python](https://img.shields.io/badge/Python-3.10+-blue)
-  [License](https://img.shields.io/badge/License-MIT-green)
-  [Status](https://img.shields.io/badge/Status-Beta-orange)
-  [SDK](https://img.shields.io/badge/SDK-Speakeasy-purple)
+  <img src="https://img.shields.io/badge/Python-3.10+-blue" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License">
+  <img src="https://img.shields.io/badge/Status-Beta-orange" alt="Beta Status">
+  <img src="https://img.shields.io/badge/SDK-Speakeasy-purple" alt="Speakeasy SDK">
 </p>
 
 ---
