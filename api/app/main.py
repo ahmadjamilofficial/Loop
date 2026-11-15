@@ -9,12 +9,20 @@ Vercel reads this file via vercel.json and serves it as a serverless function.
 """
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+# Vercel may import this nested entry point with a working directory that is
+# not ``api/``. Add the package root explicitly so ``app`` imports resolve.
+API_ROOT = str(Path(__file__).resolve().parent.parent)
+if API_ROOT not in sys.path:
+    sys.path.insert(0, API_ROOT)
 
 from app import config
 from app.middleware import RequestIdMiddleware
