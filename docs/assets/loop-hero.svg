@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">Loop: feedback signals for AI systems</title>
+  <desc id="desc">A clean workflow illustration showing an AI response, human feedback, structured signals, and a model improvement loop.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F4F8FF"/><stop offset="1" stop-color="#F5F3FF"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4285F4"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#1F2A44" flood-opacity=".09"/></filter>
+    <style>
+      .label{font:600 13px Inter,Arial,sans-serif;letter-spacing:1.2px;fill:#667085}
+      .title{font:700 20px Inter,Arial,sans-serif;fill:#182230}
+      .body{font:400 14px Inter,Arial,sans-serif;fill:#667085}
+      .node{fill:#fff;stroke:#E6EAF2;stroke-width:1.4}
+      .connector{fill:none;stroke:#B8C4D8;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:7 8}
+      .pulse{fill:#4285F4}
+      @keyframes travel{0%{transform:translateX(0);opacity:0}12%{opacity:1}82%{opacity:1}100%{transform:translateX(890px);opacity:0}}
+      .moving{animation:travel 5.5s ease-in-out infinite}
+      @media (prefers-reduced-motion: reduce){.moving{animation:none;opacity:.8;transform:translateX(340px)}}
+    </style>
+  </defs>
+  <rect width="1200" height="430" rx="28" fill="url(#bg)"/>
+  <circle cx="1080" cy="68" r="120" fill="#DDEBFF" opacity=".45"/>
+  <circle cx="74" cy="376" r="105" fill="#E9E2FF" opacity=".42"/>
+  <text x="64" y="66" class="label">THE FEEDBACK INFRASTRUCTURE LAYER</text>
+  <text x="64" y="108" class="title" style="font-size:30px">Turn product signals into a clearer</text>
+  <text x="64" y="145" class="title" style="font-size:30px">picture of model performance.</text>
+  <text x="64" y="178" class="body">Capture interactions, collect feedback, and structure the signal.</text>
+
+  <path class="connector" d="M206 290 H990"/>
+  <circle class="pulse moving" cx="0" cy="0" r="6"><animateMotion dur="5.5s" repeatCount="indefinite" path="M206 290 H990"/></circle>
+
+  <g filter="url(#shadow)">
+    <rect class="node" x="64" y="225" width="224" height="132" rx="18"/>
+    <rect x="82" y="245" width="34" height="34" rx="10" fill="#E8F0FE"/>
+    <path d="M92 262h14M99 255v14" stroke="#4285F4" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="82" y="309" class="label">01 · APPLICATION</text>
+    <text x="82" y="335" class="title">Model response</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect class="node" x="342" y="225" width="224" height="132" rx="18"/>
+    <rect x="360" y="245" width="34" height="34" rx="10" fill="#E8F0FE"/>
+    <path d="M369 254h16v11h-8l-5 5v-5h-3z" fill="none" stroke="#4285F4" stroke-width="2" stroke-linejoin="round"/>
+    <text x="360" y="309" class="label">02 · FEEDBACK</text>
+    <text x="360" y="335" class="title">Human signal</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect class="node" x="620" y="225" width="224" height="132" rx="18"/>
+    <rect x="638" y="245" width="34" height="34" rx="10" fill="#F1EAFE"/>
+    <path d="M647 254h16v16h-16zM651 258h8M651 262h8M651 266h5" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+    <text x="638" y="309" class="label">03 · STRUCTURE</text>
+    <text x="638" y="335" class="title">Training formats</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect class="node" x="898" y="225" width="224" height="132" rx="18"/>
+    <rect x="916" y="245" width="34" height="34" rx="10" fill="#E7F6EC"/>
+    <path d="M925 266a8 8 0 1 1 11 2M936 264v5h-5" fill="none" stroke="#188038" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="916" y="309" class="label">04 · ITERATION</text>
+    <text x="916" y="335" class="title">Model improvement</text>
+  </g>
+  <text x="64" y="399" class="body" style="font-size:12px">Loop is a validation and feedback SDK — it does not run or evaluate models.</text>
+</svg>
